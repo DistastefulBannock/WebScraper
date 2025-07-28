@@ -13,6 +13,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -24,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -59,9 +61,9 @@ public class JarPluginManager implements PluginManager {
                 continue;
             }
             logger.info(String.format("Loading plugin \"%s\"...", fileName));
-            try(ZipFile zip = new ZipFile(file);
-                    URLClassLoader externalClassLoader =
-                        new URLClassLoader(new URL[]{file.toURI().toURL()}, getClass().getClassLoader())){
+            try(ZipFile zip = new ZipFile(file)){
+                URLClassLoader externalClassLoader =
+                        new URLClassLoader(new URL[]{file.toURI().toURL()}, getClass().getClassLoader());
 
                 PlugJson plugJson = fetchPlugJson(zip);
                 if (plugJson == null){
@@ -85,11 +87,14 @@ public class JarPluginManager implements PluginManager {
                 plugin.finalizePlugin();
 
                 // Now that we have an instance of the plugin's main class, we can load it
-                if (!plugin.load())
+                if (!plugin.load()) {
+                    externalClassLoader.close();
                     throw new RuntimeException(
                             String.format("Plugin \"%s v%s\"decided it didn't want to load itself",
                                     plugin.getName(), plugin.getVersion())
                     );
+                }
+
                 this.plugins.add(plugin);
                 this.pluginModules.addAll(plugin.getPluginModules());
                 logger.info(String.format("Loaded plugin \"%s %s\"",
