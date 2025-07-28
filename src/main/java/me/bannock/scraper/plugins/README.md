@@ -17,12 +17,12 @@ Plugin guice modules are able to override any service in the scraper. However, t
 ```
 <dependency>
     <groupId>com.github.distastefulbannock</groupId>
-    <artifactId>Scraper</artifactId>
+    <artifactId>WebScraper</artifactId>
     <version>1.0-SNAPSHOT</version>
     <scope>provided</scope>
 </dependency>
 ```
-2. Create a main class that extends off of `me.bannock.scraper.plugins.api.Plugin`. It is used to provide the plugin loader with your plugin's guice module(s). It is not created by guice and so you cannot inject dependencies into it.
+2. Create a main class that extends off of `me.bannock.scraper.plugins.api.Plugin`. This class is used to provide the plugin loader with your plugin's guice module(s). It is not created by guice and so you cannot inject dependencies into it.
 3. Create a file named `plug.json` in the root of your jar's resources. The json file should contain the following:
 ```
 {
@@ -66,6 +66,8 @@ crawlerMultibinder.addBinding().to(YourCrawlerImpl.class);
 ### Link providers
 The scraper's `LinkService` will manage all `LinkProvider` instances. The service will go through all providers until each one returns `false` from its `hasMoreLinks()` method. Once this method returns false, the provider will never be queried for links again.
 
+Links from these providers will be passed to the scraper's crawler for processing 
+
 You can register a link provider by adding the following to your plugin's guice module's `configure` method:
 ```
 Multibinder<LinkProvider> linkProviderMultibinder = Multibinder.newSetBinder(binder(), LinkProvider.class);
@@ -73,7 +75,7 @@ linkProviderMultibinder.addBinding().to(YourLinkProviderImpl.class);
 ```
 
 ### Data savers
-The scraper's `DataService` will manage all `DataSaver` instances. Every time a scraped line is "saved", it will be sent to each data saver available for processing
+The scraper's `DataService` will manage all `DataSaver` instances. Every time a scraped line is "saved", it will be sent to each registered `DataSaver` instance for storage
 
 You can register a data saver by adding the following to your plugin's guice module's `configure` method:
 ```
@@ -82,4 +84,15 @@ dataSaverMultibinder.addBinding().to(YourDataSaverImpl.class);
 ```
 
 ### OptionManager
-You're able to inject an instance of the `OptionManager` into the constructors of your crawlers., link providers, and data savers. This service is useful for adding configuration values in the scraper's `config.json` file for use in your own code.
+You're able to inject an instance of the `OptionManager` into the constructors of scraper-created objects. This service is useful for adding configuration values in the scraper's `config.json` file for use in your own code.
+
+Option keys should be unique so that it does not clash with other keys. It is recommended to use values such as `yourGroup.yourPlugin.awesomeString1`. It is also recommended to create constants for the option keys.
+
+Here is an example of how to use the option manager in your own code
+```
+if (optionManager.getVariable(YourConfigKeys.awesomeString1).isEmpty()) {
+    optionManager.setVariable(YourConfigKeys.awesomeString1, "default value");
+    optionManager.saveVariables(); // Saves updated config
+}
+String awesomeString = optionManager.getVariable(YourConfigKeys.awesomeString1).get();
+```
