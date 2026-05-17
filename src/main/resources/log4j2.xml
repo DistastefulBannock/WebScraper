@@ -1,23 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN" monitorInterval="30">
-    <Appenders>
-        <File name="FileAppender" fileName="app.log" append="true">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
-            <Policies>
-                <SizeBasedTriggeringPolicy size="10MB"/>
-            </Policies>
-            <DefaultRolloverStrategy max="5"/>
-        </File>
+<configuration status="WARN">
+    <properties>
+        <property name="fullLogMsgPattern">[%d{HH:mm:ss}] [%-5p] %c{2.} --- %msg%n%xEx</property>
+        <property name="logDir">logs</property>
+    </properties>
 
-        <Console name="ConsoleAppender" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+    <appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${fullLogMsgPattern}"/>
         </Console>
-    </Appenders>
 
-    <Loggers>
-        <Root level="info">
-            <AppenderRef ref="FileAppender"/>
-            <AppenderRef ref="ConsoleAppender"/> </Root>
+        <RollingFile name="RollingFile"
+                     fileName="${logDir}/scraper.log"
+                     filePattern="${logDir}/scraper-%d{yyyy-MM-dd}.log">
+            <PatternLayout pattern="${fullLogMsgPattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy max="14"/>
+        </RollingFile>
+    </appenders>
 
-    </Loggers>
-</Configuration>
+    <loggers>
+        <root level="debug">
+            <appender-ref ref="Console" level="info"/>
+            <appender-ref ref="RollingFile" level="info"/>
+        </root>
+    </loggers>
+
+</configuration>
