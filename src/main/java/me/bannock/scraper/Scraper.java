@@ -65,8 +65,10 @@ public class Scraper {
 
         Thread mainThread = Thread.currentThread();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (!running)
+                return;
             logger.info("Shutdown signal received, stopping scraper...");
-            running = false;
+            this.running = false;
             try {
                 mainThread.join();
             } catch (InterruptedException e) {
@@ -84,6 +86,7 @@ public class Scraper {
         for (Plugin plugin : pluginManager.getPlugins())
             plugin.onExit(injector);
         logger.info("Exiting...");
+        this.running = false; // Tells shutdown hook the graceful exist was already handled. Prevents hang in some environments
     }
 
     private void runCrawlLoop(){
