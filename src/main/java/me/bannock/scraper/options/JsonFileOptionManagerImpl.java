@@ -1,6 +1,7 @@
 package me.bannock.scraper.options;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.apache.logging.log4j.LogManager;
@@ -37,6 +38,7 @@ public class JsonFileOptionManagerImpl implements OptionManager {
     private final File jsonFile = new File("config.json");
     private final Charset fileCharset = StandardCharsets.UTF_8;
     private final Map<String, String> variables = new HashMap<>();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     @Override
     public void setVariable(String key, String value) {
@@ -56,7 +58,7 @@ public class JsonFileOptionManagerImpl implements OptionManager {
     @Override
     public void saveVariables() {
         try {
-            Files.writeString(jsonFile.toPath(), new Gson().toJson(variables), fileCharset);
+            Files.writeString(jsonFile.toPath(), gson.toJson(variables), fileCharset);
         } catch (IOException e) {
             logger.error("Failed to save options file, optionsFile={}", jsonFile, e);
         }

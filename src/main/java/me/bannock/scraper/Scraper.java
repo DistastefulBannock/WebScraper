@@ -42,6 +42,14 @@ public class Scraper {
             throw new IllegalStateException("Could not find crawler class instance. Plugin may be missing or scraper is misconfigured");
         }
         logger.info("Using configured crawler, crawler={}", crawlerClass);
+
+        if (optionManager.getVariable(OptionKeys.waitInsteadOfExitForNoMoreLinks).isEmpty()) {
+            optionManager.setVariable(OptionKeys.waitInsteadOfExitForNoMoreLinks, "false");
+            optionManager.saveVariables();
+        }
+        this.dedicatedMode = Boolean.parseBoolean(optionManager.getVariable(OptionKeys.waitInsteadOfExitForNoMoreLinks).get());
+        optionManager.setVariable(OptionKeys.waitInsteadOfExitForNoMoreLinks, dedicatedMode + "");
+        optionManager.saveVariables();
     }
 
     private final Logger logger = LogManager.getLogger();
@@ -49,17 +57,55 @@ public class Scraper {
     private final PluginManager pluginManager;
     private final Injector injector;
     private Crawler crawler = null;
+    private final boolean dedicatedMode;
+    private volatile boolean running = true;
 
     private void start(){
         logger.info("Starting scraper...");
-        while (linkService.hasMoreLinks()){
-            String link = linkService.getNextLink();
-            logger.info("Crawling link, link={}", link);
-            crawler.crawlLink(link);
+
+        Thread mainThread = Thread.currentThread();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.info("Shutdown signal received, stopping scraper...");
+            running = false;
+            try {
+                mainThread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            LogManager.shutdown();
+        }, "scraper-shutdown-hook"));
+
+        try {
+            runCrawlLoop();
+        } catch (Exception e){
+            logger.warn("Something went wrong while crawling pages", e);
         }
-        logger.info("No more links to crawl, stopping scraper...");
+        logger.info("Telling plugins to exit...");
         for (Plugin plugin : pluginManager.getPlugins())
             plugin.onExit(injector);
+        logger.info("Exiting...");
+    }
+
+    private void runCrawlLoop(){
+        do{
+            while (linkService.hasMoreLinks() && running){
+                String link = linkService.getNextLink();
+                logger.info("Crawling link, link={}", link);
+                crawler.crawlLink(link);
+            }
+            if (!running)
+                break;
+
+            if (dedicatedMode){
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    logger.warn("Interrupted while waiting for more links", e);
+                }
+            }else{
+                logger.info("No more links to crawl, stopping scraper...");
+            }
+        }while (dedicatedMode && running);
     }
 
     public static void main(String[] args) {

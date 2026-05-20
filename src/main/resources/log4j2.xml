@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration status="WARN">
+<configuration status="WARN" shutdownHook="disable">
     <properties>
         <property name="fullLogMsgPattern">[%d{HH:mm:ss}] [%-5p] %c{2.} --- %msg%n%xEx</property>
         <property name="logDir">logs</property>
