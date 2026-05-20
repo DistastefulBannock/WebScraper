@@ -1,6 +1,7 @@
 package me.bannock.scraper.plugins.api;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
 
 import java.util.List;
 
@@ -14,6 +15,12 @@ public abstract class Plugin {
      * @return True if the plugin should be loaded, otherwise false
      */
     public boolean load(){return true;}
+
+    /**
+     * Called when the scraper is trying to exit.
+     * @param injector The injector instance for this scraper.
+     */
+    public void onExit(Injector injector){}
 
     public String getName() {
         return name;

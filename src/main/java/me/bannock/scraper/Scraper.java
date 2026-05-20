@@ -9,6 +9,7 @@ import me.bannock.scraper.links.LinkService;
 import me.bannock.scraper.options.OptionKeys;
 import me.bannock.scraper.options.OptionManager;
 import me.bannock.scraper.plugins.PluginManager;
+import me.bannock.scraper.plugins.api.Plugin;
 import me.bannock.scraper.plugins.impl.JarPluginManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,8 +19,11 @@ import java.util.Set;
 public class Scraper {
 
     @Inject
-    private Scraper(LinkService linkService, OptionManager optionManager, Set<Crawler> crawlers){
+    private Scraper(LinkService linkService, PluginManager pluginManager, Injector injector,
+                    OptionManager optionManager, Set<Crawler> crawlers){
         this.linkService = linkService;
+        this.pluginManager = pluginManager;
+        this.injector = injector;
 
         if (optionManager.getVariable(OptionKeys.crawlerClass).isEmpty()) {
             optionManager.setVariable(OptionKeys.crawlerClass, "me.bannock.scraper.crawlers.MockCrawlerImpl");
@@ -42,6 +46,8 @@ public class Scraper {
 
     private final Logger logger = LogManager.getLogger();
     private final LinkService linkService;
+    private final PluginManager pluginManager;
+    private final Injector injector;
     private Crawler crawler = null;
 
     private void start(){
@@ -52,12 +58,14 @@ public class Scraper {
             crawler.crawlLink(link);
         }
         logger.info("No more links to crawl, stopping scraper...");
+        for (Plugin plugin : pluginManager.getPlugins())
+            plugin.onExit(injector);
     }
 
     public static void main(String[] args) {
         PluginManager pluginManager = new JarPluginManager();
         pluginManager.loadPlugins();
-        Injector injector = Guice.createInjector(Modules.override(new ScraperModule()).with(pluginManager.getModules()));
+        Injector injector = Guice.createInjector(Modules.override(new ScraperModule(pluginManager)).with(pluginManager.getModules()));
         injector.getInstance(Scraper.class).start();
     }
 

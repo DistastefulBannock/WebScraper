@@ -2,7 +2,6 @@ package me.bannock.scraper.plugins.impl;
 
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
 import me.bannock.scraper.plugins.PluginManager;
 import me.bannock.scraper.plugins.api.PlugJson;
 import me.bannock.scraper.plugins.api.Plugin;
@@ -13,19 +12,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -37,7 +33,6 @@ public class JarPluginManager implements PluginManager {
     private final List<AbstractModule> pluginModules;
     private final File pluginDir;
 
-    @Inject
     public JarPluginManager(){
         this.plugins = new ArrayList<>();
         this.pluginModules = new ArrayList<>();

@@ -24,6 +24,9 @@ public class SimpleLinkServiceImpl implements LinkService {
 
     @Override
     public boolean hasMoreLinks() {
+        if (this.linkProvider.hasMoreLinks())
+            return true;
+
         while (!linkProvider.hasMoreLinks() && providerIterator.hasNext()){
             linkProvider = providerIterator.next();
         }

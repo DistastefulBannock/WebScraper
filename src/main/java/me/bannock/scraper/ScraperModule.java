@@ -12,11 +12,19 @@ import me.bannock.scraper.links.SimpleLinkServiceImpl;
 import me.bannock.scraper.links.providers.LinkProvider;
 import me.bannock.scraper.options.JsonFileOptionManagerImpl;
 import me.bannock.scraper.options.OptionManager;
+import me.bannock.scraper.plugins.PluginManager;
 
 public class ScraperModule extends AbstractModule {
 
+    public ScraperModule(PluginManager pluginManager){
+        this.pluginManager = pluginManager;
+    }
+
+    private final PluginManager pluginManager;
+
     @Override
     protected void configure() {
+        bind(PluginManager.class).toInstance(pluginManager);
         bind(OptionManager.class).to(JsonFileOptionManagerImpl.class).asEagerSingleton();
 
         Multibinder<LinkProvider> linkProviderMultibinder = Multibinder.newSetBinder(binder(), LinkProvider.class);
