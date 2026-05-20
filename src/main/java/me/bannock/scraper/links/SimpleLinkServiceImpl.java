@@ -24,12 +24,19 @@ public class SimpleLinkServiceImpl implements LinkService {
 
     @Override
     public boolean hasMoreLinks() {
+        // todo: In dedicated mode, only the last link provider will be queried for new links.
+        //  Another impl should be added that loops over them all forever
         if (this.linkProvider.hasMoreLinks())
             return true;
+        LinkProvider originalLinkProvider = linkProvider;
 
-        while (!linkProvider.hasMoreLinks() && providerIterator.hasNext()){
-            linkProvider = providerIterator.next();
+        while (providerIterator.hasNext()){
+            this.linkProvider = providerIterator.next();
+            if (linkProvider.hasMoreLinks())
+                return true;
         }
+        if (linkProvider == originalLinkProvider)
+            return false;
         return linkProvider.hasMoreLinks();
     }
 
